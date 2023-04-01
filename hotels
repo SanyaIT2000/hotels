@@ -1,0 +1,93 @@
+#include <iostream>
+#include <fstream>
+#include <cstring>
+using namespace std;
+class Room {
+    int capacity; // Количество гостей, на которое комната рассчитана
+    bool occupied;       // Занята ли комната
+public:
+    Room(int capacity = 1, bool occupied = false) : capacity(capacity), occupied(occupied) {}
+    bool is_occupied();  // Метод, который позволяет узнать, занята ли комната
+    int get_capacity();  // Метод, который получает количество гостей, которые умещаются в комнату
+    void reserve();      // Занять номер
+    void free();         // Освободить номер
+};
+bool Room::is_occupied() {
+    return occupied;
+}
+int Room::get_capacity() {
+    return capacity;
+}
+void Room::reserve() {
+    occupied = true;
+}
+void Room::free() {
+    occupied = false;
+}
+class Hotel {
+    int room_count;
+    Room* rooms;
+    double occupancy;
+public:
+    ~Hotel();
+    Hotel load_hotel(ifstream& f);
+    double get_filled_percentage();
+    int get_room_count();  // Узнать количество комнат   
+    Room& get_room(int p); // Получить комнату под номером p
+};
+Hotel::~Hotel() {
+    delete[] rooms;
+}
+int Hotel::get_room_count() {
+    return room_count;
+}
+Room& Hotel::get_room(int p) {
+    return rooms[p];
+}
+Hotel Hotel::load_hotel(ifstream& file) {
+    Hotel test;
+    int room_count;
+    file >> room_count;
+    test.rooms = new Room[room_count];
+    int counter = 0;
+    for (int i = 0;i < room_count;i++) {
+        int c, z;
+        file >> c >> z;
+        if (z == 1)counter++;
+        rooms[i] = Room(c, z);
+    }
+    occupancy = counter / (room_count / 100);
+    return test;
+}
+double Hotel::get_filled_percentage() {
+    return occupancy;
+}
+void save_hotel(ofstream& file, Hotel& h, int count) {
+    file << count;
+    int rc = h.get_room_count();
+    file << rc << endl;
+    for (int i = 0;i < rc;i++) {
+        file << h.get_room(i).get_capacity() << " " << h.get_room(i).is_occupied() << endl;
+    }
+}
+int main() {
+    ifstream f("source.txt");
+    ofstream e("test.txt");
+    int K;
+    f >> K;
+    Hotel* business = new Hotel[K];
+    double sum = 0, count = 0;
+    for (int i = 0; i < K; ++i) {
+        business[i].load_hotel(f);
+        sum += business[i].get_filled_percentage();
+    }
+    count = sum / K;
+    int w = 0;
+    for (int i = 0;i < K;i++) {
+        if (business[i].get_filled_percentage() > count)w++;
+    }
+    for (int i = 0;i < K;i++) {
+        if (business[i].get_filled_percentage() > count)save_hotel(e, business[i],w);
+    }
+    return 0;
+}
